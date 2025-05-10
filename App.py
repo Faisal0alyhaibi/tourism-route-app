@@ -1,4 +1,3 @@
-
 import asyncio
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -51,21 +50,14 @@ if st.button("Generate Route"):
 
     # --- ROUTE MAPPING ---
     try:
-        tourism_gdf = gpd.read_file(
-            r"C:\Users\faisa\OneDrive\Desktop\Data\Site_Torism.shp",
-            encoding='cp1256'
-        )
+        tourism_gdf = gpd.read_file("data/Site_Torism.shp", encoding='cp1256')
     except:
-        tourism_gdf = gpd.read_file(
-            r"C:\Users\faisa\OneDrive\Desktop\Data\Site_Torism.shp",
-            encoding='latin1'
-        )
+        tourism_gdf = gpd.read_file("data/Site_Torism.shp", encoding='latin1')
 
-    cities_gdf = gpd.read_file(r"C:\Users\faisa\OneDrive\Desktop\Data\Site.shp")
+    cities_gdf = gpd.read_file("data/Site.shp")
 
     filtered_sites = tourism_gdf[tourism_gdf["Category_c"].isin(selected_categories)]
 
-    # Validate city names
     if start_city not in cities_gdf["NAME"].values or end_city not in cities_gdf["NAME"].values:
         st.error("❌ Start or End city not found in city layer.")
         st.stop()
@@ -74,11 +66,10 @@ if st.button("Generate Route"):
     end_geom = cities_gdf[cities_gdf["NAME"] == end_city].geometry.iloc[0].centroid
 
     line = LineString([start_geom, end_geom])
-    buffer = gpd.GeoSeries([line.buffer(0.25)])  # ~25 km
+    buffer = gpd.GeoSeries([line.buffer(0.25)])
 
     filtered_sites = filtered_sites[filtered_sites.geometry.within(buffer.iloc[0])]
 
-    # Build folium map
     m = folium.Map(location=[start_geom.y, start_geom.x], zoom_start=7, tiles="CartoDB Positron")
 
     folium.Marker([start_geom.y, start_geom.x], tooltip="Start City", icon=folium.Icon(color="green")).add_to(m)
@@ -94,7 +85,5 @@ if st.button("Generate Route"):
     folium.PolyLine(locations=[[pt[1], pt[0]] for pt in line.coords], color="black", weight=2.5).add_to(m)
 
     st.subheader("📍 Filtered Tourism Sites and Route")
-    
-    # 🛠️ DEBUG ENABLED: Show map output + object dump
     st_data = st_folium(m, width=900, height=600, returned_objects=["all"])
     st.write("🧪 Debug Output:", st_data)
